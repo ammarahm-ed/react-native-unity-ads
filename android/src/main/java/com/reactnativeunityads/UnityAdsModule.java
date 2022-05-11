@@ -22,6 +22,7 @@ public class UnityAdsModule extends ReactContextBaseJavaModule implements IUnity
   boolean isAdLoaded = false;
   Promise showPromise;
   Promise loadPromise;
+  Promise initializePromise;
 
   ReactApplicationContext reactContext;
 
@@ -87,13 +88,21 @@ public class UnityAdsModule extends ReactContextBaseJavaModule implements IUnity
     }
   };
 
+
+
   @ReactMethod
-  public void loadAd(String gameId, String placementId, Boolean test, Promise p){
-    loadPromise = p;
+  public void initialize(String gameId, Boolean test, Promise p){
+    initializePromise = p;
     testMode = test;
     unityGameID = gameId;
+    UnityAds.initialize(reactContext.getApplicationContext(), unityGameID, testMode,this);
+  }
+
+  @ReactMethod
+  public void loadAd(String placementId, Promise p){
+    loadPromise = p;
     unityPlacementID = placementId;
-    UnityAds.initialize(reactContext.getApplicationContext(), unityGameID, testMode);
+    UnityAds.load(unityPlacementID, loadListener);
   }
 
   @ReactMethod
@@ -120,11 +129,18 @@ public class UnityAdsModule extends ReactContextBaseJavaModule implements IUnity
   @Override
   public void onInitializationComplete() {
   isReady = true;
+  if (initializePromise != null) {
+    initializePromise.resolve(true);
+  }
   }
 
   @Override
   public void onInitializationFailed(UnityAds.UnityAdsInitializationError unityAdsInitializationError, String s) {
   isReady = false;
+
+  if (initializePromise != null) {
+      initializePromise.resolve(false);
+    }
     Log.e("UnityAds", "onInitializationFailed: " + s);
   }
 }

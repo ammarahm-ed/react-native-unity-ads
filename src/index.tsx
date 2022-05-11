@@ -1,9 +1,10 @@
-import { NativeModules } from 'react-native';
+import { NativeModules } from "react-native";
 
 type UnityAdsType = {
-  loadAd(gameId : string, placementId : string, testMode : boolean) : Promise<boolean>;
-  isInitialized() : Promise<boolean>;
-  showAd() : Promise<string>;
+  initialize(gameId: string, testMode: boolean): Promise<boolean>;
+  loadAd(placementId: string): Promise<boolean>;
+  isInitialized(): Promise<boolean>;
+  showAd(): Promise<string>;
 };
 
 const { UnityAds } = NativeModules;
