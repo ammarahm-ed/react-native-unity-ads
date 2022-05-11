@@ -1,91 +1,91 @@
 package com.reactnativeunityads;
 
-
-import android.widget.Toast;
-
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
 
-import com.unity3d.ads.IUnityAdsListener;
+import com.unity3d.ads.IUnityAdsInitializationListener;
+import com.unity3d.ads.IUnityAdsLoadListener;
+import com.unity3d.ads.IUnityAdsShowListener;
 import com.unity3d.ads.UnityAds;
+import com.unity3d.ads.UnityAdsShowOptions;
 
 import android.util.Log;
 
-public class UnityAdsModule extends ReactContextBaseJavaModule {
+public class UnityAdsModule extends ReactContextBaseJavaModule implements IUnityAdsInitializationListener {
 
   String unityGameID;
   String unityPlacementID;
   boolean testMode = true;
   boolean isReady = false;
-
+  boolean isAdLoaded = false;
   Promise showPromise;
   Promise loadPromise;
 
   ReactApplicationContext reactContext;
 
-  UnityAdsModule(ReactApplicationContext context){
-    super(context);
-
-    reactContext = context;
-  }
-
-  private class UnityAdsListener implements IUnityAdsListener{
-    @Override
-    public void onUnityAdsReady(String placementId){
-      isReady = true;
-
-      if(loadPromise != null){
-        loadPromise.resolve(isReady);
-      }
-    }
-
-    @Override
-    public void onUnityAdsStart (String placementId){
-      // Implement functionality for a user starting to watch an ad.
-    }
-
-    @Override
-    public void onUnityAdsFinish (String placementId, UnityAds.FinishState finishState){
-      try{
-        if(showPromise != null)
-        {
-          showPromise.resolve(finishState.toString());
-          cleanUp();
-        }
-      }catch(Exception ex){
-        showPromise.resolve("ERROR");
-        isReady = false;
-        cleanUp();
-      }
-    }
-
-    @Override
-    public void onUnityAdsError (UnityAds.UnityAdsError error, String message){
-      try{
-        if(loadPromise != null)
-        {
-          loadPromise.reject("E_FAILED_TOLOAD", message);
-        }
-
-        if(showPromise != null)
-        {
-          showPromise.reject("E_FAILED_TO_LOAD", message);
-        }
-
-        cleanUp();
-      }catch(Exception ex){
-        isReady = false;
-        cleanUp();
-      }
-    }
-  }
-
   @Override
   public String getName(){
     return "UnityAds";
   }
+  UnityAdsModule(ReactApplicationContext context){
+    super(context);
+    reactContext = context;
+  }
+
+  private IUnityAdsLoadListener loadListener = new IUnityAdsLoadListener() {
+    @Override
+    public void onUnityAdsAdLoaded(String placementId) {
+      isAdLoaded = true;
+      if (loadPromise != null) {
+        loadPromise.resolve(true);
+        loadPromise = null;
+      }
+    }
+
+    @Override
+    public void onUnityAdsFailedToLoad(String placementId, UnityAds.UnityAdsLoadError error, String message) {
+      isAdLoaded = false;
+      if (loadPromise != null) {
+        loadPromise.resolve(false);
+        loadPromise = null;
+      }
+    }
+  };
+
+  private IUnityAdsShowListener showListener = new IUnityAdsShowListener() {
+    @Override
+    public void onUnityAdsShowFailure(String placementId, UnityAds.UnityAdsShowError error, String message) {
+      isAdLoaded = false;
+      if (showPromise != null) {
+        showPromise.resolve(false);
+        showPromise = null;
+      }
+    }
+
+    @Override
+    public void onUnityAdsShowStart(String placementId) {
+      Log.v("UnityAds", "onUnityAdsShowStart: " + placementId);
+    }
+
+    @Override
+    public void onUnityAdsShowClick(String placementId) {
+      if (showPromise != null) {
+        showPromise.resolve(true);
+        showPromise = null;
+      }
+    }
+
+    @Override
+    public void onUnityAdsShowComplete(String placementId, UnityAds.UnityAdsShowCompletionState state) {
+      isAdLoaded = false;
+      if (showPromise != null) {
+        showPromise.resolve(true);
+        showPromise = null;
+      }
+    }
+  };
 
   @ReactMethod
   public void loadAd(String gameId, String placementId, Boolean test, Promise p){
@@ -93,28 +93,21 @@ public class UnityAdsModule extends ReactContextBaseJavaModule {
     testMode = test;
     unityGameID = gameId;
     unityPlacementID = placementId;
-
-    final UnityAdsListener adListener = new UnityAdsListener();
-    UnityAds.addListener(adListener);
-    //UnityAds.initialize(this.getReactApplicationContext(), unityGameID, testMode);
     UnityAds.initialize(reactContext.getApplicationContext(), unityGameID, testMode);
   }
 
   @ReactMethod
-  public void isLoad(Promise p){
+  public void isInitialized(Promise p){
     p.resolve(isReady);
   }
 
   @ReactMethod
   public void showAd(Promise p){
     showPromise = p;
-
-    if(UnityAds.isReady(unityPlacementID)){
-      UnityAds.show(this.getCurrentActivity(), unityPlacementID);
-      //UnityAds.show(reactContext.getCurrentActivity(), unityPlacementID);
-
+    if(isAdLoaded){
+      UnityAds.show(reactContext.getCurrentActivity(), unityPlacementID, new UnityAdsShowOptions(), showListener);
     }else{
-      showPromise.resolve("NOT_LOADED");
+      showPromise.resolve(false);
       showPromise = null;
     }
   }
@@ -122,5 +115,16 @@ public class UnityAdsModule extends ReactContextBaseJavaModule {
   public void cleanUp(){
     showPromise = null;
     loadPromise = null;
+  }
+
+  @Override
+  public void onInitializationComplete() {
+  isReady = true;
+  }
+
+  @Override
+  public void onInitializationFailed(UnityAds.UnityAdsInitializationError unityAdsInitializationError, String s) {
+  isReady = false;
+    Log.e("UnityAds", "onInitializationFailed: " + s);
   }
 }
