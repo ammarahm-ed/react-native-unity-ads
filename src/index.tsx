@@ -15,7 +15,8 @@ type UnityAdRewardedType = {
   showAd(): Promise<string>;
 };
 
-export const UnityAdsManager: UnityAdsManagerType = NativeModules.UnityAds;
+export const UnityAdsManager: UnityAdsManagerType =
+  NativeModules.UnityAdsManager;
 export const UnityInterstitialAd: UnityAdInterstitialType =
   NativeModules.UnityInterstitialAd;
 export const UnityRewardedAd: UnityAdRewardedType =
