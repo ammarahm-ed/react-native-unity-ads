@@ -1,12 +1,38 @@
-import { NativeModules } from "react-native";
+import { NativeModules, requireNativeComponent, ViewProps } from "react-native";
 
-type UnityAdsType = {
+type UnityAdsManagerType = {
   initialize(gameId: string, testMode: boolean): Promise<boolean>;
-  loadAd(placementId: string): Promise<boolean>;
   isInitialized(): Promise<boolean>;
+};
+
+type UnityAdInterstitialType = {
+  loadAd(placementId: string): Promise<boolean>;
   showAd(): Promise<string>;
 };
 
-const { UnityAds } = NativeModules;
+type UnityAdRewardedType = {
+  loadAd(placementId: string): Promise<boolean>;
+  showAd(): Promise<string>;
+};
 
-export default UnityAds as UnityAdsType;
+export const UnityAdsManager: UnityAdsManagerType = NativeModules.UnityAds;
+export const UnityInterstitialAd: UnityAdInterstitialType =
+  NativeModules.UnityInterstitialAd;
+export const UnityRewardedAd: UnityAdRewardedType =
+  NativeModules.UnityRewardedAd;
+
+type Error = {
+  errorMessage: string;
+  errorCode: string;
+};
+
+interface UnityBannerAdProps extends ViewProps {
+  adUnitId: string;
+  onAdLoaded?: () => void;
+  onAdFailedToLoad?: (error: Error) => void;
+  onAdOpened?: () => void;
+}
+
+export const UnityBannerAd = requireNativeComponent<UnityBannerAdProps>(
+  "UnityBannerAd"
+);
