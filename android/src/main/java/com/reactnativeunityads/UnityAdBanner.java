@@ -15,6 +15,8 @@ public class UnityAdBanner extends ReactViewGroup implements BannerView.IListene
   BannerView bannerView;
   ThemedReactContext mContext;
   String placementId;
+  int width = 350;
+  int height = 50;
 
   public UnityAdBanner(ThemedReactContext context) {
     super(context);
@@ -29,17 +31,31 @@ public class UnityAdBanner extends ReactViewGroup implements BannerView.IListene
       bannerView.load();
       return;
     }
-    bannerView = new BannerView(mContext.getCurrentActivity(),placementId,new UnityBannerSize(this.getWidth(),this.getHeight()));
+    bannerView = new BannerView(mContext.getCurrentActivity(),placementId,new UnityBannerSize(width,height));
     bannerView.setListener(this);
     bannerView.load();
     addView(bannerView);
   }
 
+  public void setDimensions(int bwidth,int bheight) {
+  width = bwidth;
+  height = bheight;
+  if (placementId != null) {
+    loadAd(placementId);
+  }
+}
+
 
   @Override
   public void onBannerLoaded(BannerView bannerView) {
-
     sendEvent(UnityAdBannerManager.EVENT_AD_LOADED, Arguments.createMap());
+    UnityBannerSize adSize = bannerView.getSize();
+    int width = adSize.getWidth();
+    int height = adSize.getHeight();
+    int left = bannerView.getLeft();
+    int top = bannerView.getTop();
+    bannerView.measure(width, height);
+    bannerView.layout(left, top, left + width, top + height);
   }
 
   @Override
@@ -72,7 +88,6 @@ public class UnityAdBanner extends ReactViewGroup implements BannerView.IListene
       loadAd(placementId);
     }
   }
-
   @Override
   public void onInitializationFailed(UnityAds.UnityAdsInitializationError unityAdsInitializationError, String s) {
 

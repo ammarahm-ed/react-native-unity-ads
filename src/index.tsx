@@ -32,6 +32,13 @@ interface UnityBannerAdProps extends ViewProps {
   onAdLoaded?: () => void;
   onAdFailedToLoad?: (error: Error) => void;
   onAdOpened?: () => void;
+  /**
+   * Only supports 320*50
+   */
+  size: {
+    width: number;
+    height: number;
+  };
 }
 
 export const UnityAdBanner = requireNativeComponent<UnityBannerAdProps>(
