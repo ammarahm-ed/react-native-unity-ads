@@ -34,6 +34,6 @@ interface UnityBannerAdProps extends ViewProps {
   onAdOpened?: () => void;
 }
 
-export const UnityBannerAd = requireNativeComponent<UnityBannerAdProps>(
-  "UnityBannerAd"
+export const UnityAdBanner = requireNativeComponent<UnityBannerAdProps>(
+  "UnityAdBanner"
 );
