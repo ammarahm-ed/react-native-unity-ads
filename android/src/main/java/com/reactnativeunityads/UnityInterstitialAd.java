@@ -90,6 +90,10 @@ public class UnityInterstitialAd extends ReactContextBaseJavaModule {
       p.resolve(false);
       return;
     }
+    if (isAdLoaded) {
+       p.resolve(true);
+      return;
+    }
     loadPromise = p;
     unityPlacementID = placementId;
     UnityAds.load(unityPlacementID, loadListener);
