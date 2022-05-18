@@ -73,13 +73,20 @@ public class UnityRewardedAd extends ReactContextBaseJavaModule {
     @Override
     public void onUnityAdsShowComplete(String placementId, UnityAds.UnityAdsShowCompletionState state) {
       isAdLoaded = false;
-      if (state.equals(UnityAds.UnityAdsShowCompletionState.COMPLETED) && showPromise != null) {
+
+      try {
+
+        if (state.equals(UnityAds.UnityAdsShowCompletionState.COMPLETED) && showPromise != null) {
         showPromise.resolve(true);
-        showPromise = null;
-      } else {
+        } else {
         showPromise.resolve(false);
+        }
         showPromise = null;
+      } catch(Exception e) {
+        
       }
+      
+
     }
   };
 
